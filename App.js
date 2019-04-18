@@ -31,17 +31,6 @@ export default class App extends Component {
     };
   }
 
-  componentDidMount() {
-    this._focusOnFirstLaunch();
-  }
-
-  _focusOnFirstLaunch = () => {};
-
-  _getClipboardString = async () => {
-    const copyText = await Clipboard.getString();
-    return copyText;
-  };
-
   _hexDecode = hex => {
     let string = "";
     hex = hex.replace(/\s+/g, "");
@@ -51,11 +40,18 @@ export default class App extends Component {
     return string;
   };
 
-  _handleChangeText = async text => {
+  _handleChangeHexText = async text => {
     await this.setState({
       hexText: text
     });
-    console.log("text changed", this.state.hexText);
+    console.log("hex text changed", this.state.hexText);
+  };
+
+  _handleChangeDecodedText = async text => {
+    await this.setState({
+      decodedText: text
+    });
+    console.log("decoded text changed", this.state.decodedText);
   };
 
   _handleDecode = async () => {
@@ -64,20 +60,33 @@ export default class App extends Component {
       Keyboard.dismiss();
       return;
     }
+
     const decodedText = await this._hexDecode(this.state.hexText);
     console.log("decoded", decodedText);
+
     this.setState({ decodedText });
     Keyboard.dismiss();
+
     await Clipboard.setString(decodedText);
     ToastAndroid.show("Your sauce has been copied", ToastAndroid.SHORT);
   };
 
-  _goToLink = url => {
-    const canOpenURL = Linking.canOpenURL(url);
-    if (canOpenURL) {
-      Linking.openURL(url);
-    } else {
-      ToastAndroid("Can't Open Link", ToastAndroid.SHORT);
+  _goToLink = async url => {
+    if (url === "") {
+      ToastAndroid.show("Enter some sauce!!!", ToastAndroid.SHORT);
+      return;
+    }
+
+    try {
+      const canOpenURL = await Linking.canOpenURL(url);
+
+      if (canOpenURL) {
+        Linking.openURL(url);
+      } else {
+        ToastAndroid.show("Can't open link", ToastAndroid.SHORT);
+      }
+    } catch (error) {
+      console.log(error);
     }
   };
 
@@ -88,13 +97,12 @@ export default class App extends Component {
         <Text style={styles.label}>Hex String:</Text>
         <TextInput
           style={styles.hexInput}
-          onChangeText={this._handleChangeText}
+          onChangeText={this._handleChangeHexText}
           multiline={true}
           placeholder="Input hex code here"
           numberOfLines={5}
           value={this.state.hexText}
           ref="hexInput"
-          autoFocus
         />
         <TouchableHighlight
           style={styles.button}
@@ -108,6 +116,7 @@ export default class App extends Component {
         <TextInput
           placeholder="Decode text here"
           style={styles.hexInput}
+          onChangeText={this._handleChangeDecodedText}
           multiline={true}
           numberOfLines={3}
           value={this.state.decodedText}
