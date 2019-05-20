@@ -13,13 +13,15 @@ import {
   StyleSheet,
   Text,
   View,
-  TextInput,
   TouchableHighlight,
   Clipboard,
   Linking,
   Keyboard,
-  ToastAndroid
+  ToastAndroid,
+  TouchableOpacity
 } from "react-native";
+import { Input } from "react-native-elements";
+import FontAwesome5 from "react-native-vector-icons/FontAwesome5";
 
 export default class App extends Component {
   constructor(props) {
@@ -54,20 +56,22 @@ export default class App extends Component {
     console.log("decoded text changed", this.state.decodedText);
   };
 
-  _handleDecode = async () => {
+  _handleDecode = () => {
     if (this.state.hexText === "") {
       ToastAndroid.show("Please input or copy something", ToastAndroid.SHORT);
       Keyboard.dismiss();
       return;
     }
 
-    const decodedText = await this._hexDecode(this.state.hexText);
+    const decodedText = this._hexDecode(this.state.hexText);
     console.log("decoded", decodedText);
 
     this.setState({ decodedText });
     Keyboard.dismiss();
+  };
 
-    await Clipboard.setString(decodedText);
+  _handleCopy = async () => {
+    await Clipboard.setString(this.state.decodedText);
     ToastAndroid.show("Your sauce has been copied", ToastAndroid.SHORT);
   };
 
@@ -93,14 +97,17 @@ export default class App extends Component {
   render() {
     return (
       <View style={styles.container}>
-        <Text style={{ fontSize: 30, fontWeight: "bold" }}>HEX CONVERT</Text>
+        <Text style={{ fontSize: 30, fontWeight: "bold", marginVertical: 20 }}>
+          HEX CONVERT
+        </Text>
         <Text style={styles.label}>Hex String:</Text>
-        <TextInput
-          style={styles.hexInput}
+        <Input
+          containerStyle={styles.hexInput}
+          inputContainerStyle={{
+            borderBottomColor: "transparent"
+          }}
           onChangeText={this._handleChangeHexText}
-          multiline={true}
           placeholder="Input hex code here"
-          numberOfLines={5}
           value={this.state.hexText}
           ref="hexInput"
         />
@@ -113,14 +120,23 @@ export default class App extends Component {
           <Button title="Decode now" onPress={this._handleDecode} />
         </TouchableHighlight>
         <Text style={[styles.label, { marginTop: 20 }]}>Decoded String</Text>
-        <TextInput
+        <Input
           placeholder="Decode text here"
-          style={styles.hexInput}
+          containerStyle={styles.hexInput}
+          inputContainerStyle={{
+            borderBottomColor: "transparent"
+          }}
           onChangeText={this._handleChangeDecodedText}
-          multiline={true}
-          numberOfLines={3}
           value={this.state.decodedText}
           selectTextOnFocus={true}
+          rightIcon={
+            <TouchableOpacity
+              onPress={this._handleCopy}
+              hitSlop={{ top: 20, left: 20, bottom: 20, right: 20 }}
+            >
+              <FontAwesome5 name={"copy"} size={25} />
+            </TouchableOpacity>
+          }
         />
         <TouchableHighlight style={styles.button}>
           <Button
@@ -145,7 +161,6 @@ const styles = StyleSheet.create({
   hexInput: {
     borderWidth: 0.5,
     width: "90%",
-    textAlignVertical: "top",
     borderRadius: 10,
     margin: 10,
     padding: 10
